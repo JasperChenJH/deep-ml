@@ -1,15 +1,13 @@
-import numpy as np
-def single_neuron_model(features: list[list[float]], labels: list[int], weights: list[float], bias: float) -> (list[float], float):
-	# Your code here
-	features = np.array(features)
-	labels = np.array(labels)
-	weights = np.array(weights)
+import torch
+import torch.nn.functional as F
+
+def single_neuron_model(features: list[list[float]], labels: list[int], weights: list[float], bias: float) -> tuple[
+	list[float], float]:
+
+	features = torch.tensor(features,dtype=torch.float32)
+	labels = torch.tensor(labels,dtype=torch.float32)
+	weights = torch.tensor(weights,dtype=torch.float32)
 	out = features @ weights + bias
-	probabilities = sigmoid(out)
-	mse = np.mean((probabilities - labels) ** 2)
-	return np.round(probabilities,4).tolist() , np.round(mse,4)
-
-def sigmoid(x):
-	return 1/(1+np.exp(-x))
-
-
+	res1 = torch.sigmoid(out)
+	res2 = F.mse_loss(res1,labels)
+	return torch.round(res1,decimals=4).tolist(),torch.round(res2,decimals=4).tolist()

@@ -25,16 +25,19 @@ def train_neuron(features: torch.Tensor, labels: torch.Tensor, initial_weights: 
     b = torch.tensor(initial_bias,requires_grad=True,dtype=torch.float)
     mean_mse = []
     sigmoid = nn.Sigmoid()
+    optimizer = torch.optim.SGD([W,b],learning_rate)
     for epoch in range(epochs):
         y_hat = sigmoid(X@W+b)
         l = loss(y_hat,y)
         mean_mse.append(round(l.item(),4))
-        W.grad = None
-        b.grad = None
+        optimizer.zero_grad()
+        # W.grad = None
+        # b.grad = None
         l.backward()
-        with torch.no_grad():
-            W-=learning_rate*W.grad
-            b-=learning_rate*b.grad
+        optimizer.step()
+        # with torch.no_grad():
+        #     W-=learning_rate*W.grad
+        #     b-=learning_rate*b.grad
     updated_weights = [round(v, 4) for v in W.detach().tolist()]
     updated_bias = round(b.item(), 4)
     return updated_weights,updated_bias,mean_mse

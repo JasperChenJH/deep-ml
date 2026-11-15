@@ -1,37 +1,40 @@
-import numpy as np
+import torch
+import torch.nn as nn
 
-def train_neuron(features: np.ndarray, labels: np.ndarray,
-                 initial_weights: np.ndarray, initial_bias: float,
-                 learning_rate: float, epochs: int) -> tuple[np.ndarray, float, list[float]]:
+def train_neuron(features: torch.Tensor, labels: torch.Tensor, initial_weights: torch.Tensor, initial_bias: float, learning_rate: float, epochs: int) -> tuple[list[float], float, list[float]]:
+    """
+    Simulates a single neuron with sigmoid activation and trains it using
+    backpropagation with MSE loss via SGD.
 
-    X = np.asarray(features, dtype=float)
-    y = np.asarray(labels, dtype=float).reshape(-1)
-    w = np.asarray(initial_weights, dtype=float).copy()
-    b = float(initial_bias)
+    Args:
+        features: Input feature tensor of shape (n_samples, n_features)
+        labels: Binary label tensor of shape (n_samples,)
+        initial_weights: Initial weight tensor of shape (n_features,)
+        initial_bias: Initial bias scalar
+        learning_rate: Learning rate for SGD
+        epochs: Number of training epochs
 
-    mse_values = []
-    m = len(y)
-
+    Returns:
+        Tuple of (updated_weights, updated_bias, mse_values) all rounded to 4 decimal places
+    """
+    # Your code here
+    loss = torch.nn.MSELoss()
+    X = features
+    y = labels
+    W = initial_weights.clone().detach().float().requires_grad_(True)
+    b = torch.tensor(initial_bias,requires_grad=True,dtype=torch.float)
+    mean_mse = []
+    sigmoid = nn.Sigmoid()
     for epoch in range(epochs):
-        # 1. 前向传播
-        z = X @ w + b
-        y_pred = 1 / (1 + np.exp(-z))
-
-        # 2. 计算 MSE（更新前）
-        mse = np.mean((y_pred - y) ** 2)
-        mse_values.append(round(float(mse), 4))
-
-        # 3. 反向传播
-        delta = 2 * (y_pred - y) * y_pred * (1 - y_pred)
-
-        dw = X.T @ delta / m
-        db = np.mean(delta)
-
-        # 4. 更新参数
-        w -= learning_rate * dw
-        b -= learning_rate * db
-
-    updated_weights = np.round(w, 4)
-    updated_bias = round(float(b), 4)
-
-    return updated_weights, updated_bias, mse_values
+        y_hat = sigmoid(X@W+b)
+        l = loss(y_hat,y)
+        mean_mse.append(round(l.item(),4))
+        W.grad = None
+        b.grad = None
+        l.backward()
+        with torch.no_grad():
+            W-=learning_rate*W.grad
+            b-=learning_rate*b.grad
+    updated_weights = [round(v, 4) for v in W.detach().tolist()]
+    updated_bias = round(b.item(), 4)
+    return updated_weights,updated_bias,mean_mse
